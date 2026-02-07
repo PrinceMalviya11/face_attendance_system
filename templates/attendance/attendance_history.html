@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Attendance History - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-white">
+                <i class="bi bi-clock-history"></i> Attendance History
+            </h2>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <i class="bi bi-list"></i> Attendance Records
+                </div>
+                <div class="col-md-6">
+                    <form method="get" class="row g-2">
+                        <div class="col-auto">
+                            <input type="date" name="start_date" class="form-control" value="{{ start_date }}"
+                                placeholder="Start Date">
+                        </div>
+                        <div class="col-auto">
+                            <input type="date" name="end_date" class="form-control" value="{{ end_date }}"
+                                placeholder="End Date">
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-filter"></i> Filter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if attendances %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            {% if user.is_admin %}
+                            <th>User</th>
+                            <th>ID</th>
+                            {% endif %}
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                            <th>Subject</th>
+                            <th>Session</th>
+                            <th>Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attendance in attendances %}
+                        <tr>
+                            {% if user.is_admin %}
+                            <td>{{ attendance.user.first_name }} {{ attendance.user.last_name }}</td>
+                            <td>{{ attendance.user.unique_id }}</td>
+                            {% endif %}
+                            <td>{{ attendance.date }}</td>
+                            <td>{{ attendance.time|time:"H:i:s" }}</td>
+                            <td>
+                                {% if attendance.status == 'PRESENT' %}
+                                <span class="badge bg-success">{{ attendance.status }}</span>
+                                {% elif attendance.status == 'ABSENT' %}
+                                <span class="badge bg-danger">{{ attendance.status }}</span>
+                                {% else %}
+                                <span class="badge bg-warning">{{ attendance.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ attendance.subject|default:"-" }}</td>
+                            <td>{{ attendance.session|default:"-" }}</td>
+                            <td>
+                                {% if attendance.confidence %}
+                                {{ attendance.confidence|floatformat:2 }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-center text-muted py-4">
+                No attendance records found for the selected period.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

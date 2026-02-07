@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Dashboard - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="text-white mb-3">
+                <i class="bi bi-person-circle"></i> My Dashboard
+            </h1>
+            <p class="text-white-50">Welcome, {{ user.first_name|default:user.username }}!</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon stat-primary">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-value">{{ total_attendance }}</div>
+                <div class="stat-label">Total Attendance</div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon stat-success">
+                    <i class="bi bi-calendar-month"></i>
+                </div>
+                <div class="stat-value">{{ month_attendance }}</div>
+                <div class="stat-label">This Month</div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon stat-info">
+                    <i class="bi bi-calendar-week"></i>
+                </div>
+                <div class="stat-value">{{ week_attendance }}</div>
+                <div class="stat-label">This Week</div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon stat-warning">
+                    <i class="bi bi-percent"></i>
+                </div>
+                <div class="stat-value">{{ attendance_percentage }}%</div>
+                <div class="stat-label">Attendance Rate</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Attendance -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock-history"></i> Recent Attendance</span>
+                    <a href="{% url 'attendance:attendance_history' %}" class="btn btn-sm btn-outline-light">
+                        View All <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_attendance %}
+                    <div class="attendance-scroll-container">
+                        <table class="table table-hover mb-0">
+                            <thead class="sticky-top">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Subject</th>
+                                    <th>Session</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendance in recent_attendance %}
+                                <tr>
+                                    <td>{{ attendance.date|date:"M d, Y" }}</td>
+                                    <td>{{ attendance.time|time:"h:i A" }}</td>
+                                    <td>
+                                        <span class="badge bg-success">{{ attendance.status }}</span>
+                                    </td>
+                                    <td>{{ attendance.subject|default:"-" }}</td>
+                                    <td>{{ attendance.session|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">No attendance records yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile & Status -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-person-badge"></i> Profile Information
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <p class="mb-1 text-muted small">Name</p>
+                        <p class="mb-0"><strong>{{ user.first_name }} {{ user.last_name }}</strong></p>
+                    </div>
+                    <div class="mb-3">
+                        <p class="mb-1 text-muted small">ID</p>
+                        <p class="mb-0"><strong>{{ user.unique_id }}</strong></p>
+                    </div>
+                    <div class="mb-3">
+                        <p class="mb-1 text-muted small">Email</p>
+                        <p class="mb-0">{{ user.email }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <p class="mb-1 text-muted small">Department</p>
+                        <p class="mb-0">{{ user.department|default:"-" }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <p class="mb-1 text-muted small">Face Data Status</p>
+                        <p class="mb-0">
+                            {% if has_face_data %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> Collected ({{ face_samples }} samples)
+                            </span>
+                            {% else %}
+                            <span class="badge bg-warning">
+                                <i class="bi bi-exclamation-triangle"></i> Not Collected
+                            </span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

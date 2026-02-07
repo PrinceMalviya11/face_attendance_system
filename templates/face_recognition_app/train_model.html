@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Train Model - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-cpu"></i> Train Face Recognition Model
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle"></i> About Model Training</h5>
+                        <p class="mb-0">
+                            The face recognition model uses LBPH (Local Binary Patterns Histograms) algorithm
+                            to learn and recognize faces. Training the model is required after collecting face
+                            datasets for new users.
+                        </p>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div class="stat-icon stat-primary">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                                <div class="stat-value">{{ total_users }}</div>
+                                <div class="stat-label">Total Users</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div class="stat-icon stat-success">
+                                    <i class="bi bi-camera"></i>
+                                </div>
+                                <div class="stat-value">{{ users_with_data }}</div>
+                                <div class="stat-label">Users with Face Data</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div
+                                    class="stat-icon {% if model_exists %}stat-success{% else %}stat-warning{% endif %}">
+                                    <i class="bi bi-cpu"></i>
+                                </div>
+                                <div class="stat-value">
+                                    {% if model_exists %}
+                                    <span class="badge bg-success">Trained</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">Not Trained</span>
+                                    {% endif %}
+                                </div>
+                                <div class="stat-label">Model Status</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Training Requirements:</h5>
+                        <ul>
+                            <li>At least one user must have face data collected</li>
+                            <li>Each user should have 20 face samples</li>
+                            <li>Training may take a few seconds to complete</li>
+                            <li>Existing model will be overwritten</li>
+                        </ul>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg" {% if users_with_data == 0 %}disabled{% endif %}>
+                                <i class="bi bi-cpu"></i> Start Training
+                            </button>
+                            {% if users_with_data == 0 %}
+                            <p class="text-danger text-center mb-0">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                No users with face data. Please collect face data first.
+                            </p>
+                            {% endif %}
+                            <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

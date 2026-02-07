@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mark Attendance - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-camera-video"></i> Mark Attendance - Face Recognition
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8 mb-4">
+                            <h5 class="mb-3">Webcam Feed</h5>
+                            <div class="webcam-container">
+                                <img src="{% url 'face_recognition_app:video_feed' %}" alt="Webcam Feed"
+                                    class="img-fluid" id="webcam-feed">
+                            </div>
+                            <p class="text-muted small mt-2">
+                                <i class="bi bi-info-circle"></i> Position your face in front of the camera
+                            </p>
+                        </div>
+
+                        <div class="col-md-4">
+                            <h5 class="mb-3">Attendance Details</h5>
+
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">Subject (Optional)</label>
+                                <input type="text" class="form-control" id="subject" placeholder="e.g., Mathematics">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="session" class="form-label">Session</label>
+                                <select class="form-select" id="session">
+                                    <option value="Default">Default</option>
+                                    <option value="Morning">Morning</option>
+                                    <option value="Afternoon">Afternoon</option>
+                                    <option value="Evening">Evening</option>
+                                </select>
+                            </div>
+
+                            <div class="d-grid mb-3">
+                                <button type="button" class="btn btn-primary btn-lg"
+                                    onclick="startAttendanceRecognition()">
+                                    <i class="bi bi-check-circle"></i> Mark Attendance
+                                </button>
+                            </div>
+
+                            <div id="recognition-status" class="mb-3"></div>
+                            <div id="recognition-result"></div>
+
+                            <div class="alert alert-info mt-4">
+                                <h6><i class="bi bi-lightbulb"></i> Instructions:</h6>
+                                <ul class="small mb-0">
+                                    <li>Ensure good lighting</li>
+                                    <li>Look directly at the camera</li>
+                                    <li>Remove glasses if possible</li>
+                                    <li>Click "Mark Attendance" button</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .webcam-container {
+        background: #000;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .webcam-container img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+</style>
+{% endblock %}

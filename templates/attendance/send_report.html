@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Send Report via Email - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="text-white mb-3">
+                <i class="bi bi-envelope"></i> Send Attendance Report
+            </h1>
+            <p class="text-white-50">Send attendance reports via email</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-send"></i> Email Report Configuration
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Recipient Email</label>
+                            <input type="email" class="form-control" id="email" name="email"
+                                placeholder="Enter recipient email address" required>
+                            <div class="form-text">The report will be sent to this email address</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="report_type" class="form-label">Report Type</label>
+                            <select class="form-select" id="report_type" name="report_type" required>
+                                <option value="">Select report type</option>
+                                <option value="daily">Daily Report</option>
+                                <option value="monthly">Monthly Report</option>
+                                <option value="custom">Custom Date Range</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="daily_date_field" style="display: none;">
+                            <label for="start_date_daily" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="start_date_daily" name="start_date">
+                        </div>
+
+                        <div class="mb-3" id="monthly_date_field" style="display: none;">
+                            <label for="start_date_monthly" class="form-label">Month</label>
+                            <input type="month" class="form-control" id="start_date_monthly" name="start_date">
+                        </div>
+
+                        <div id="custom_date_fields" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="start_date_custom" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="start_date_custom" name="start_date">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="end_date" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> Send Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('report_type').addEventListener('change', function () {
+        const reportType = this.value;
+        const dailyField = document.getElementById('daily_date_field');
+        const monthlyField = document.getElementById('monthly_date_field');
+        const customFields = document.getElementById('custom_date_fields');
+
+        const dailyInput = document.getElementById('start_date_daily');
+        const monthlyInput = document.getElementById('start_date_monthly');
+        const customStartInput = document.getElementById('start_date_custom');
+        const customEndInput = document.getElementById('end_date');
+
+        // Hide all fields first
+        dailyField.style.display = 'none';
+        monthlyField.style.display = 'none';
+        customFields.style.display = 'none';
+
+        // Clear all date inputs and remove required
+        dailyInput.value = '';
+        monthlyInput.value = '';
+        customStartInput.value = '';
+        customEndInput.value = '';
+
+        dailyInput.removeAttribute('required');
+        monthlyInput.removeAttribute('required');
+        customStartInput.removeAttribute('required');
+        customEndInput.removeAttribute('required');
+
+        // Show relevant field based on selection
+        if (reportType === 'daily') {
+            dailyField.style.display = 'block';
+            dailyInput.setAttribute('required', 'required');
+            // Set today's date as default
+            const today = new Date().toISOString().split('T')[0];
+            dailyInput.value = today;
+        } else if (reportType === 'monthly') {
+            monthlyField.style.display = 'block';
+            monthlyInput.setAttribute('required', 'required');
+            // Set current month as default
+            const now = new Date();
+            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            monthlyInput.value = currentMonth;
+        } else if (reportType === 'custom') {
+            customFields.style.display = 'block';
+            customStartInput.setAttribute('required', 'required');
+            customEndInput.setAttribute('required', 'required');
+        }
+    });
+</script>
+{% endblock %}

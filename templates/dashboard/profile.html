@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-person-circle"></i> My Profile
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Personal Information</h5>
+                            <div class="mb-3">
+                                <p class="text-muted small mb-1">Username</p>
+                                <p class="mb-0"><strong>{{ user_obj.username }}</strong></p>
+                            </div>
+                            <div class="mb-3">
+                                <p class="text-muted small mb-1">Full Name</p>
+                                <p class="mb-0">{{ user_obj.first_name }} {{ user_obj.last_name }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <p class="text-muted small mb-1">Unique ID</p>
+                                <p class="mb-0">{{ user_obj.unique_id }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <p class="text-muted small mb-1">Email</p>
+                                <p class="mb-0">{{ user_obj.email }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <p class="text-muted small mb-1">Phone</p>
+                                <p class="mb-0">{{ user_obj.phone|default:"-" }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <p class="text-muted small mb-1">Department</p>
+                                <p class="mb-0">{{ user_obj.department|default:"-" }}</p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Account Information</h5>
+                            <div class="mb-3">
+                                <p class="text-muted small mb-1">Role</p>
+                                <p class="mb-0">
+                                    {% if user_obj.role == 'ADMIN' %}
+                                    <span class="badge bg-danger">Administrator</span>
+                                    {% else %}
+                                    <span class="badge bg-primary">User</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="mb-3">
+                                <p class="text-muted small mb-1">Account Status</p>
+                                <p class="mb-0">
+                                    {% if user_obj.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="mb-3">
+                                <p class="text-muted small mb-1">Member Since</p>
+                                <p class="mb-0">{{ user_obj.created_at|date:"F d, Y" }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <p class="text-muted small mb-1">Face Data Status</p>
+                                <p class="mb-0">
+                                    {% if profile.face_dataset_collected %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Collected ({{ profile.face_samples_count }}
+                                        samples)
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-warning">
+                                        <i class="bi bi-exclamation-triangle"></i> Not Collected
+                                    </span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

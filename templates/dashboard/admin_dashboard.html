@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="text-white mb-3">
+                <i class="bi bi-speedometer2"></i> Admin Dashboard
+            </h1>
+            <p class="text-white-50">Welcome, {{ user.first_name|default:user.username }}! Here's your system overview.
+            </p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-md-4 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon stat-primary">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="stat-value">{{ total_users }}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon stat-success">
+                    <i class="bi bi-camera-fill"></i>
+                </div>
+                <div class="stat-value">{{ users_with_face_data }}</div>
+                <div class="stat-label">Face Data Collected</div>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon stat-info">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="stat-value">{{ today_attendance }}</div>
+                <div class="stat-label">Today's Attendance</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Attendance -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock-history"></i> Recent Attendance</span>
+                    <a href="{% url 'attendance:attendance_history' %}" class="btn btn-sm btn-outline-light">
+                        View All <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_attendance %}
+                    <div class="attendance-scroll-container">
+                        <table class="table table-hover mb-0">
+                            <thead class="sticky-top">
+                                <tr>
+                                    <th>User</th>
+                                    <th>ID</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendance in recent_attendance %}
+                                <tr>
+                                    <td>{{ attendance.user.first_name }} {{ attendance.user.last_name }}</td>
+                                    <td>{{ attendance.user.unique_id }}</td>
+                                    <td>{{ attendance.date|date:"M d, Y" }}</td>
+                                    <td>{{ attendance.time|time:"h:i A" }}</td>
+                                    <td>
+                                        <span class="badge bg-success">{{ attendance.status }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">No attendance records yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="col-lg-4 mb-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <i class="bi bi-info-circle"></i> System Status
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Face Data Collection</span>
+                            <span>{{ users_with_face_data }}/{{ total_users }}</span>
+                        </div>
+                        <div class="progress">
+                            {% widthratio users_with_face_data total_users 100 as progress_percentage %}
+                            <div class="progress-bar" role="progressbar" style="width: {{ progress_percentage }}%">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <p class="mb-2">
+                            <i class="bi bi-people"></i> Active Users:
+                            <strong>{{ active_users }}</strong>
+                        </p>
+                    </div>
+
+                    <div class="mb-3">
+                        <p class="mb-2">
+                            <i class="bi bi-calendar-check"></i> Today's Attendance:
+                            <strong>{{ today_attendance }}</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Needing Face Data -->
+            {% if users_needing_face_data %}
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-exclamation-triangle"></i> Action Required
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-2">Users without face data:</p>
+                    <ul class="list-unstyled">
+                        {% for user in users_needing_face_data %}
+                        <li class="mb-2">
+                            <a href="{% url 'users:user_detail' user.id %}" class="text-decoration-none">
+                                {{ user.username }} ({{ user.unique_id }})
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

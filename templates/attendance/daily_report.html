@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Daily Attendance Report - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="text-white mb-3">
+                <i class="bi bi-calendar-day"></i> Daily Attendance Report
+            </h1>
+            <p class="text-white-50">View attendance records for {{ date|date:"F d, Y" }}</p>
+        </div>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-funnel"></i> Filter Report
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="date" class="form-label">Select Date</label>
+                            <input type="date" class="form-control" id="date" name="date"
+                                value="{{ date|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-8 d-flex align-items-end gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i> View Report
+                            </button>
+                            <a href="?date={{ date|date:'Y-m-d' }}&export=csv" class="btn btn-success">
+                                <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+                            </a>
+                            <a href="?date={{ date|date:'Y-m-d' }}&export=excel" class="btn btn-info">
+                                <i class="bi bi-file-earmark-excel"></i> Export Excel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-success">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="stat-value">{{ total_present }}</div>
+                <div class="stat-label">Present</div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-danger">
+                    <i class="bi bi-x-circle-fill"></i>
+                </div>
+                <div class="stat-value">{{ total_absent }}</div>
+                <div class="stat-label">Absent</div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-info">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="stat-value">{{ attendances.count }}</div>
+                <div class="stat-label">Total Records</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-table"></i> Attendance Records
+                </div>
+                <div class="card-body">
+                    {% if attendances %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>User ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Subject</th>
+                                    <th>Session</th>
+                                    <th>Confidence</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendance in attendances %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ attendance.user.unique_id }}</td>
+                                    <td>{{ attendance.user.first_name }} {{ attendance.user.last_name }}</td>
+                                    <td>{{ attendance.user.email }}</td>
+                                    <td>{{ attendance.time|time:"h:i A" }}</td>
+                                    <td>
+                                        {% if attendance.status == 'PRESENT' %}
+                                        <span class="badge bg-success">{{ attendance.status }}</span>
+                                        {% elif attendance.status == 'LATE' %}
+                                        <span class="badge bg-warning">{{ attendance.status }}</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">{{ attendance.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ attendance.subject|default:"-" }}</td>
+                                    <td>{{ attendance.session|default:"-" }}</td>
+                                    <td>
+                                        {% if attendance.confidence %}
+                                        {{ attendance.confidence|floatformat:2 }}%
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox" style="font-size: 3rem; color: var(--text-muted);"></i>
+                        <p class="text-muted mt-3">No attendance records found for this date.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

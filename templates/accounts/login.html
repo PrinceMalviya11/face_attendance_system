@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card fade-in">
+        <div class="login-header">
+            <i class="bi bi-camera-video" style="font-size: 3rem; color: #667eea;"></i>
+            <h2>Welcome Back</h2>
+            <p>Face Recognition Attendance System</p>
+        </div>
+
+        <form method="post" action="{% url 'accounts:login' %}">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="{{ form.username.id_for_label }}" class="form-label">
+                    <i class="bi bi-person"></i> Username
+                </label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                <div class="text-danger small mt-1">{{ form.username.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.password.id_for_label }}" class="form-label">
+                    <i class="bi bi-lock"></i> Password
+                </label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                <div class="text-danger small mt-1">{{ form.password.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-box-arrow-in-right"></i> Login
+                </button>
+            </div>
+        </form>
+
+        <div class="text-center mt-4">
+            <p class="text-muted">
+                Don't have an account?
+                <a href="{% url 'accounts:signup' %}" class="text-decoration-none">
+                    <strong>Sign up here</strong>
+                </a>
+            </p>
+        </div>
+
+        <div class="text-center mt-3">
+            <p class="text-muted small">
+                <i class="bi bi-shield-check"></i> Secure Authentication
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+</style>
+{% endblock %}
