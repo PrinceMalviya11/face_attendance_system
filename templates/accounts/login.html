@@ -29,7 +29,10 @@
                 <label for="{{ form.password.id_for_label }}" class="form-label">
                     <i class="bi bi-lock"></i> Password
                 </label>
-                {{ form.password }}
+                <div class="password-input-wrapper">
+                    {{ form.password }}
+                    <i class="bi bi-eye-slash password-toggle-icon" data-target="id_password"></i>
+                </div>
                 {% if form.password.errors %}
                 <div class="text-danger small mt-1">{{ form.password.errors }}</div>
                 {% endif %}
@@ -142,6 +145,33 @@
         color: var(--text-muted);
         font-size: 0.875rem;
         font-weight: 500;
+    }
+
+    /* Password Toggle Styles */
+    .password-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .password-input-wrapper .form-control {
+        padding-right: 45px;
+    }
+
+    .password-toggle-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        transition: color 0.3s ease;
+        z-index: 10;
+    }
+
+    .password-toggle-icon:hover {
+        color: var(--primary-color);
     }
 </style>
 {% endblock %}
