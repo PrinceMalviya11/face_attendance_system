@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', lambda request: redirect('accounts:login'), name='home'),
     path('accounts/', include('accounts.urls')),
+    path('accounts/', include('allauth.urls')),  # OAuth2 URLs
     path('users/', include('users.urls')),
     path('face/', include('face_recognition_app.urls')),
     path('attendance/', include('attendance.urls')),

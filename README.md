@@ -19,6 +19,7 @@ A production-ready, web-based Face Recognition Attendance System built with Djan
 - ✅ **Attendance Reports**: Daily, monthly, and user-wise reports
 - ✅ **Export Functionality**: Export reports in CSV and Excel formats
 - ✅ **Email Reports**: Automatically send attendance reports via email
+- ✅ **Google OAuth2 Login**: Users can login with Google account (User-only feature)
 
 ### Security Features
 - 🔐 Secure password hashing (PBKDF2)
@@ -26,6 +27,7 @@ A production-ready, web-based Face Recognition Attendance System built with Djan
 - 🔐 Session-based authentication
 - 🔐 Role-based access control
 - 🔐 Input validation and sanitization
+- 🔐 Google OAuth2 integration (Users only, Admins use username/password)
 
 ## 🛠️ Technology Stack
 
@@ -108,7 +110,22 @@ Follow the prompts to create an admin account:
 python manage.py runserver
 ```
 
-### 8. Access the Application
+### 8. (Optional) Setup Google OAuth2 Login
+
+For users to login with Google:
+
+```bash
+# See detailed guide in GOOGLE_OAUTH_SETUP.md
+```
+
+**Quick Setup:**
+1. Get Google OAuth credentials from https://console.cloud.google.com/
+2. Add credentials to `.env` file
+3. Configure Site and Social Application in Django Admin
+
+**Full Guide**: See `GOOGLE_OAUTH_SETUP.md` for complete instructions.
+
+### 9. Access the Application
 
 Open your browser and navigate to:
 ```

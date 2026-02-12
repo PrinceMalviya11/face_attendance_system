@@ -18,7 +18,7 @@
 
     <!-- Custom CSS -->
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=2.0">
 
     {% block extra_css %}{% endblock %}
 </head>
@@ -88,11 +88,22 @@
                             <i class="bi bi-person-circle"></i> {{ user.username }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{% url 'dashboard:profile' %}">Profile</a></li>
+                            <li><a class="dropdown-item" href="{% url 'dashboard:profile' %}"><i
+                                        class="bi bi-person"></i> Profile</a></li>
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
-                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">Logout</a></li>
+                            <li>
+                                <a class="dropdown-item" href="#" id="themeToggle">
+                                    <i class="bi bi-moon-fill" id="themeIcon"></i>
+                                    <span id="themeText">Dark Mode</span>
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i
+                                        class="bi bi-box-arrow-right"></i> Logout</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -135,7 +146,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <!-- Custom JS -->
-    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/main.js' %}?v=2.0"></script>
 
     {% block extra_js %}{% endblock %}
 </body>

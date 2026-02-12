@@ -17,7 +17,7 @@ class CustomUser(AbstractUser):
     )
     
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='USER')
-    unique_id = models.CharField(max_length=50, unique=True, help_text="Roll No / Employee ID")
+    unique_id = models.CharField(max_length=50, unique=True, blank=True, null=True, help_text="Roll No / Employee ID")
     phone = models.CharField(max_length=15, blank=True, null=True)
     department = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

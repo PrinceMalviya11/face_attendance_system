@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure--px%s=hxpwvq1qt+7ayys1#$bwr%bp6@*5@2b_vz=nf-^)h(4n'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure--px%s=hxpwvq1qt+7ayys1#$bwr%bp6@*5@2b_vz=nf-^)h(4n')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -38,6 +39,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Django Allauth (OAuth2)
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     # Custom apps
     'accounts',
     'users',
@@ -45,6 +52,9 @@ INSTALLED_APPS = [
     'attendance',
     'dashboard',
 ]
+
+# Required for django-allauth
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -54,6 +64,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Allauth middleware
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'Face_Attendance_System.urls'
@@ -69,6 +81,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
+                # Required for django-allauth
+                'django.template.context_processors.request',
             ],
         },
     },
@@ -140,18 +154,64 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
+# Authentication Backends
+AUTHENTICATION_BACKENDS = [
+    # Django default (for admin username/password login)
+    'django.contrib.auth.backends.ModelBackend',
+    # Allauth (for OAuth2 social login - users only)
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
 # Login URLs
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'dashboard:index'
 LOGOUT_REDIRECT_URL = 'accounts:login'
+
+# Django Allauth Configuration
+# OAuth2 Settings (Google Login for Users Only)
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # No email verification for seamless OAuth
+ACCOUNT_UNIQUE_EMAIL = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'  # No email verification for social accounts
+
+# Custom adapters to ensure OAuth users are created as regular users
+ACCOUNT_ADAPTER = 'accounts.adapters.CustomAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'accounts.adapters.CustomSocialAccountAdapter'
+
+# Redirect URLs for OAuth
+ACCOUNT_LOGIN_ON_GET = False
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+# Skip intermediate signup form - auto-create user directly
+ACCOUNT_SIGNUP_FORM_CLASS = None
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False
+
+# Google OAuth2 Provider Settings
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        # credentials are loaded from the database (SocialApp)
+    }
+}
 
 # Email Configuration (for sending attendance reports)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'princemalaviya11@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'hyfhdxkszmfwuoge')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='princemalaviya11@gmail.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='hyfhdxkszmfwuoge')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Session Security

@@ -250,8 +250,6 @@ def send_report_email(request):
     if request.method == 'POST':
         email = request.POST.get('email')
         report_type = request.POST.get('report_type')
-        start_date = request.POST.get('start_date')
-        end_date = request.POST.get('end_date')
         
         # Validate required fields
         if not email or not report_type:
@@ -261,20 +259,35 @@ def send_report_email(request):
         # Get attendances based on report type
         try:
             if report_type == 'daily':
-                if not start_date:
+                # Get the daily_date field
+                daily_date = request.POST.get('daily_date')
+                
+                if not daily_date:
                     messages.error(request, 'Please select a date for the daily report.')
                     return redirect('attendance:send_report_email')
-                date = datetime.strptime(start_date, '%Y-%m-%d').date()
-                attendances = get_daily_report(date)
-                # For daily report, start and end date are the same
-                end_date = start_date
+
+                try:
+                    selected_date = datetime.strptime(daily_date, '%Y-%m-%d').date()
+                except ValueError:
+                    messages.error(request, 'Invalid date format. Please use YYYY-MM-DD.')
+                    return redirect('attendance:send_report_email')
+
+                attendances = get_daily_report(selected_date)
+                
+                # For daily report, start and end date are the same (as strings)
+                start_date_str = selected_date.strftime('%Y-%m-%d')
+                end_date_str = selected_date.strftime('%Y-%m-%d')
+            
             elif report_type == 'monthly':
-                if not start_date:
+                # Get the monthly_date field
+                monthly_date = request.POST.get('monthly_date')
+                
+                if not monthly_date:
                     messages.error(request, 'Please select a month for the monthly report.')
                     return redirect('attendance:send_report_email')
 
                 try:
-                    year, month = map(int, start_date.split('-')[:2])
+                    year, month = map(int, monthly_date.split('-')[:2])
                 except ValueError:
                     messages.error(request, 'Invalid month format.')
                     return redirect('attendance:send_report_email')
@@ -284,24 +297,54 @@ def send_report_email(request):
                 from calendar import monthrange
                 last_day = monthrange(year, month)[1]
 
-                start_date = f"{year}-{month:02d}-01"
-                end_date = f"{year}-{month:02d}-{last_day}"
+                # Convert to date objects first, then to strings
+                start_date_obj = datetime(year, month, 1).date()
+                end_date_obj = datetime(year, month, last_day).date()
+                
+                start_date_str = start_date_obj.strftime('%Y-%m-%d')
+                end_date_str = end_date_obj.strftime('%Y-%m-%d')
 
             else:  # custom
-                if not start_date or not end_date:
+                # Get the custom_start_date and custom_end_date fields
+                custom_start_date = request.POST.get('custom_start_date')
+                custom_end_date = request.POST.get('custom_end_date')
+                
+                if not custom_start_date or not custom_end_date:
                     messages.error(request, 'Please select both start and end dates for custom report.')
                     return redirect('attendance:send_report_email')
-                attendances = get_date_range_report(start_date, end_date)
+                
+                try:
+                    start_date_obj = datetime.strptime(custom_start_date, '%Y-%m-%d').date()
+                    end_date_obj = datetime.strptime(custom_end_date, '%Y-%m-%d').date()
+                    
+                    # Validate that start date is before or equal to end date
+                    if start_date_obj > end_date_obj:
+                        messages.error(request, 'Start date must be before or equal to end date.')
+                        return redirect('attendance:send_report_email')
+                    
+                    start_date_str = custom_start_date
+                    end_date_str = custom_end_date
+                    
+                except ValueError:
+                    messages.error(request, 'Invalid date format. Please use YYYY-MM-DD.')
+                    return redirect('attendance:send_report_email')
+                
+                attendances = get_date_range_report(start_date_str, end_date_str)
         except (ValueError, IndexError) as e:
             messages.error(request, f'Invalid date format: {str(e)}')
+            return redirect('attendance:send_report_email')
+        
+        # Check if there are any attendance records
+        if not attendances.exists():
+            messages.warning(request, f'No attendance records found for the selected period. Email not sent.')
             return redirect('attendance:send_report_email')
         
         # Send email
         success = send_attendance_report_email(
             user_email=email,
             report_type=report_type,
-            start_date=start_date,
-            end_date=end_date,
+            start_date=start_date_str,
+            end_date=end_date_str,
             attendances=attendances
         )
         

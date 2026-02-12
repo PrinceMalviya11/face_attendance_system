@@ -10,8 +10,7 @@
             <h1 class="text-white mb-3">
                 <i class="bi bi-person-badge"></i> User Attendance Report
             </h1>
-            <p class="text-white-50">Attendance records for {{ user_obj.first_name }} {{ user_obj.last_name }} ({{
-                user_obj.unique_id }})</p>
+            <p class="text-white-50">Attendance records for {{ user_obj.first_name }} {{ user_obj.last_name }} {{ user_obj.unique_id }}</p>
         </div>
     </div>
 
@@ -55,7 +54,7 @@
 
     <!-- User Info & Statistics -->
     <div class="row mb-4">
-        <div class="col-md-3 mb-3">
+        <div class="col-md-4 col-sm-6 mb-4">
             <div class="stat-card">
                 <div class="stat-icon stat-primary">
                     <i class="bi bi-person-fill"></i>
@@ -64,7 +63,7 @@
                 <div class="stat-label">User ID</div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-4 col-sm-6 mb-4">
             <div class="stat-card">
                 <div class="stat-icon stat-success">
                     <i class="bi bi-check-circle-fill"></i>
@@ -73,7 +72,7 @@
                 <div class="stat-label">Total Present</div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-4 col-sm-6 mb-4">
             <div class="stat-card">
                 <div class="stat-icon stat-info">
                     <i class="bi bi-calendar-check"></i>
@@ -82,86 +81,78 @@
                 <div class="stat-label">Total Records</div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="stat-card">
-                <div class="stat-icon stat-warning">
-                    <i class="bi bi-envelope-fill"></i>
+    </div>
+</div>
+
+<!-- Attendance Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-table"></i> Attendance Records
+            </div>
+            <div class="card-body">
+                {% if attendances %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th>Subject</th>
+                                <th>Session</th>
+                                <th>Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attendance in attendances %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ attendance.date|date:"M d, Y" }}</td>
+                                <td>{{ attendance.time|time:"h:i A" }}</td>
+                                <td>
+                                    {% if attendance.status == 'PRESENT' %}
+                                    <span class="badge bg-success">{{ attendance.status }}</span>
+                                    {% elif attendance.status == 'LATE' %}
+                                    <span class="badge bg-warning">{{ attendance.status }}</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">{{ attendance.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ attendance.subject|default:"-" }}</td>
+                                <td>{{ attendance.session|default:"-" }}</td>
+                                <td>
+                                    {% if attendance.confidence %}
+                                    {{ attendance.confidence|floatformat:2 }}%
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                <div class="stat-value" style="font-size: 1rem;">{{ user_obj.email|truncatechars:15 }}</div>
-                <div class="stat-label">Email</div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: var(--text-muted);"></i>
+                    <p class="text-muted mt-3">No attendance records found for this user.</p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Attendance Table -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <i class="bi bi-table"></i> Attendance Records
-                </div>
-                <div class="card-body">
-                    {% if attendances %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th>Status</th>
-                                    <th>Subject</th>
-                                    <th>Session</th>
-                                    <th>Confidence</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for attendance in attendances %}
-                                <tr>
-                                    <td>{{ forloop.counter }}</td>
-                                    <td>{{ attendance.date|date:"M d, Y" }}</td>
-                                    <td>{{ attendance.time|time:"h:i A" }}</td>
-                                    <td>
-                                        {% if attendance.status == 'PRESENT' %}
-                                        <span class="badge bg-success">{{ attendance.status }}</span>
-                                        {% elif attendance.status == 'LATE' %}
-                                        <span class="badge bg-warning">{{ attendance.status }}</span>
-                                        {% else %}
-                                        <span class="badge bg-danger">{{ attendance.status }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ attendance.subject|default:"-" }}</td>
-                                    <td>{{ attendance.session|default:"-" }}</td>
-                                    <td>
-                                        {% if attendance.confidence %}
-                                        {{ attendance.confidence|floatformat:2 }}%
-                                        {% else %}
-                                        -
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="bi bi-inbox" style="font-size: 3rem; color: var(--text-muted);"></i>
-                        <p class="text-muted mt-3">No attendance records found for this user.</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+<!-- Back Button -->
+<div class="row mt-4">
+    <div class="col-12">
+        <a href="{% url 'dashboard:index' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
     </div>
-
-    <!-- Back Button -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <a href="{% url 'dashboard:index' %}" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> Back to Dashboard
-            </a>
-        </div>
-    </div>
+</div>
 </div>
 {% endblock %}

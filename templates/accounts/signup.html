@@ -7,7 +7,7 @@
 <div class="signup-container">
     <div class="signup-card fade-in">
         <div class="signup-header">
-            <i class="bi bi-person-plus-fill" style="font-size: 3rem; color: #667eea;"></i>
+            <i class="bi bi-person-plus-fill" style="font-size: 3rem; color: var(--primary-color);"></i>
             <h2>Create Account</h2>
             <p>Join the Face Recognition Attendance System</p>
         </div>
@@ -97,8 +97,8 @@
                 {% if form.password1.errors %}
                 <div class="text-danger small mt-1">{{ form.password1.errors }}</div>
                 {% endif %}
-                <small class="text-muted">You can use any password (simple passwords like "password" or "12345678" are
-                    allowed)</small>
+                <!-- <small class="text-muted">You can use any password (simple passwords like "password" or "12345678" are
+                    allowed)</small> -->
             </div>
 
             <div class="mb-3">
@@ -139,7 +139,7 @@
 {% block extra_css %}
 <style>
     body {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--bg-body);
         min-height: 100vh;
         display: flex;
         align-items: center;
@@ -153,10 +153,11 @@
     }
 
     .signup-card {
-        background: white;
+        background: var(--bg-card);
         border-radius: 20px;
         padding: 40px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        box-shadow: var(--shadow-lg);
+        transition: background-color 0.3s ease;
     }
 
     .signup-header {
@@ -165,36 +166,40 @@
     }
 
     .signup-header h2 {
-        color: #333;
+        color: var(--text-primary);
         margin: 15px 0 5px;
         font-weight: 700;
     }
 
     .signup-header p {
-        color: #666;
+        color: var(--text-secondary);
         margin: 0;
     }
 
     .form-label {
         font-weight: 600;
-        color: #555;
+        color: var(--text-secondary);
         margin-bottom: 8px;
     }
 
     .form-control {
         border-radius: 10px;
         padding: 12px 15px;
-        border: 2px solid #e0e0e0;
+        border: 2px solid var(--border-color);
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
         transition: all 0.3s ease;
     }
 
     .form-control:focus {
-        border-color: #667eea;
+        border-color: var(--primary-color);
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
         box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
     }
 
     .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--bg-gradient);
         border: none;
         border-radius: 10px;
         padding: 12px;
@@ -228,11 +233,11 @@
     }
 
     a {
-        color: #667eea;
+        color: var(--primary-color);
     }
 
     a:hover {
-        color: #764ba2;
+        color: var(--primary-hover);
     }
 </style>
 {% endblock %}
