@@ -131,6 +131,7 @@ def attendance_history(request):
 def daily_report(request):
     """
     Generate daily attendance report
+    Supports filtering by specific user or all users
     """
     if not request.user.is_admin():
         messages.error(request, 'You do not have permission to access this page.')
@@ -138,11 +139,24 @@ def daily_report(request):
     
     date_str = request.GET.get('date')
     if date_str:
-        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        try:
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            date = timezone.localtime(timezone.now()).date()
     else:
         date = timezone.localtime(timezone.now()).date()
     
+    # User filtering
+    selected_user_id = request.GET.get('user', 'all')
+    all_users = CustomUser.objects.filter(is_active=True).order_by('first_name', 'last_name')
+    
     attendances = get_daily_report(date)
+    
+    if selected_user_id and selected_user_id != 'all':
+        try:
+            attendances = attendances.filter(user_id=int(selected_user_id))
+        except (ValueError, TypeError):
+            pass
     
     # Export options
     export_format = request.GET.get('export')
@@ -157,6 +171,8 @@ def daily_report(request):
         'today': timezone.localtime(timezone.now()).date(),
         'total_present': attendances.filter(status='PRESENT').count(),
         'total_absent': attendances.filter(status='ABSENT').count(),
+        'all_users': all_users,
+        'selected_user_id': selected_user_id,
     }
     
     return render(request, 'attendance/daily_report.html', context)
@@ -166,6 +182,7 @@ def daily_report(request):
 def monthly_report(request):
     """
     Generate monthly attendance report
+    Supports filtering by specific user or all users
     """
     if not request.user.is_admin():
         messages.error(request, 'You do not have permission to access this page.')
@@ -181,7 +198,17 @@ def monthly_report(request):
         year = timezone.now().year
         month = timezone.now().month
     
+    # User filtering
+    selected_user_id = request.GET.get('user', 'all')
+    all_users = CustomUser.objects.filter(is_active=True).order_by('first_name', 'last_name')
+    
     attendances = get_monthly_report(year, month)
+    
+    if selected_user_id and selected_user_id != 'all':
+        try:
+            attendances = attendances.filter(user_id=int(selected_user_id))
+        except (ValueError, TypeError):
+            pass
     
     # Export options
     export_format = request.GET.get('export')
@@ -195,6 +222,8 @@ def monthly_report(request):
         'year': year,
         'month': month,
         'total_present': attendances.filter(status='PRESENT').count(),
+        'all_users': all_users,
+        'selected_user_id': selected_user_id,
     }
     
     return render(request, 'attendance/monthly_report.html', context)
@@ -242,25 +271,48 @@ def user_report(request, user_id=None):
 def send_report_email(request):
     """
     Send attendance report via email
+    Supports user selection and multiple report types (daily, monthly, custom)
+    Report is sent to the currently logged-in user's email
     """
     if not request.user.is_admin():
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('dashboard:index')
     
+    # Get all users for the dropdown
+    all_users = CustomUser.objects.filter(is_active=True).order_by('first_name', 'last_name')
+    
     if request.method == 'POST':
-        email = request.POST.get('email')
-        report_type = request.POST.get('report_type')
+        # Email is auto-filled from logged-in user, but allow override
+        email = request.POST.get('email', '').strip()
+        report_type = request.POST.get('report_type', '').strip()
+        selected_user_id = request.POST.get('selected_user', '').strip()
         
         # Validate required fields
-        if not email or not report_type:
-            messages.error(request, 'Email and report type are required.')
+        if not email:
+            messages.error(request, 'Recipient email is required.')
             return redirect('attendance:send_report_email')
         
-        # Get attendances based on report type
+        if not report_type:
+            messages.error(request, 'Please select a report type.')
+            return redirect('attendance:send_report_email')
+        
+        if not selected_user_id:
+            messages.error(request, 'Please select a user.')
+            return redirect('attendance:send_report_email')
+        
+        # Determine if filtering by specific user or all users
+        selected_user = None
+        if selected_user_id != 'all':
+            try:
+                selected_user = CustomUser.objects.get(id=int(selected_user_id))
+            except (CustomUser.DoesNotExist, ValueError):
+                messages.error(request, 'Selected user not found.')
+                return redirect('attendance:send_report_email')
+        
+        # Get attendances based on report type, filtered by selected user (or all)
         try:
             if report_type == 'daily':
-                # Get the daily_date field
-                daily_date = request.POST.get('daily_date')
+                daily_date = request.POST.get('daily_date', '').strip()
                 
                 if not daily_date:
                     messages.error(request, 'Please select a date for the daily report.')
@@ -272,15 +324,17 @@ def send_report_email(request):
                     messages.error(request, 'Invalid date format. Please use YYYY-MM-DD.')
                     return redirect('attendance:send_report_email')
 
-                attendances = get_daily_report(selected_date)
+                attendances = Attendance.objects.filter(
+                    date=selected_date
+                ).select_related('user')
+                if selected_user:
+                    attendances = attendances.filter(user=selected_user)
                 
-                # For daily report, start and end date are the same (as strings)
                 start_date_str = selected_date.strftime('%Y-%m-%d')
                 end_date_str = selected_date.strftime('%Y-%m-%d')
             
             elif report_type == 'monthly':
-                # Get the monthly_date field
-                monthly_date = request.POST.get('monthly_date')
+                monthly_date = request.POST.get('monthly_date', '').strip()
                 
                 if not monthly_date:
                     messages.error(request, 'Please select a month for the monthly report.')
@@ -292,22 +346,25 @@ def send_report_email(request):
                     messages.error(request, 'Invalid month format.')
                     return redirect('attendance:send_report_email')
 
-                attendances = get_monthly_report(year, month)
+                attendances = Attendance.objects.filter(
+                    date__year=year,
+                    date__month=month
+                ).select_related('user')
+                if selected_user:
+                    attendances = attendances.filter(user=selected_user)
 
                 from calendar import monthrange
                 last_day = monthrange(year, month)[1]
 
-                # Convert to date objects first, then to strings
                 start_date_obj = datetime(year, month, 1).date()
                 end_date_obj = datetime(year, month, last_day).date()
                 
                 start_date_str = start_date_obj.strftime('%Y-%m-%d')
                 end_date_str = end_date_obj.strftime('%Y-%m-%d')
 
-            else:  # custom
-                # Get the custom_start_date and custom_end_date fields
-                custom_start_date = request.POST.get('custom_start_date')
-                custom_end_date = request.POST.get('custom_end_date')
+            elif report_type == 'custom':
+                custom_start_date = request.POST.get('custom_start_date', '').strip()
+                custom_end_date = request.POST.get('custom_end_date', '').strip()
                 
                 if not custom_start_date or not custom_end_date:
                     messages.error(request, 'Please select both start and end dates for custom report.')
@@ -317,7 +374,6 @@ def send_report_email(request):
                     start_date_obj = datetime.strptime(custom_start_date, '%Y-%m-%d').date()
                     end_date_obj = datetime.strptime(custom_end_date, '%Y-%m-%d').date()
                     
-                    # Validate that start date is before or equal to end date
                     if start_date_obj > end_date_obj:
                         messages.error(request, 'Start date must be before or equal to end date.')
                         return redirect('attendance:send_report_email')
@@ -329,30 +385,117 @@ def send_report_email(request):
                     messages.error(request, 'Invalid date format. Please use YYYY-MM-DD.')
                     return redirect('attendance:send_report_email')
                 
-                attendances = get_date_range_report(start_date_str, end_date_str)
+                attendances = Attendance.objects.filter(
+                    date__gte=start_date_str,
+                    date__lte=end_date_str
+                ).select_related('user')
+                if selected_user:
+                    attendances = attendances.filter(user=selected_user)
+            
+            else:
+                messages.error(request, 'Invalid report type selected.')
+                return redirect('attendance:send_report_email')
+                
         except (ValueError, IndexError) as e:
             messages.error(request, f'Invalid date format: {str(e)}')
             return redirect('attendance:send_report_email')
         
         # Check if there are any attendance records
+        if selected_user:
+            user_display = f"{selected_user.first_name} {selected_user.last_name}".strip() or selected_user.username
+        else:
+            user_display = "All Users"
+        
         if not attendances.exists():
-            messages.warning(request, f'No attendance records found for the selected period. Email not sent.')
+            messages.warning(
+                request,
+                f'No attendance records found for {user_display} in the selected period. Email not sent.'
+            )
             return redirect('attendance:send_report_email')
         
-        # Send email
+        # Send email with user info in report type
+        report_label = f"{report_type} - {user_display}"
+        
         success = send_attendance_report_email(
             user_email=email,
-            report_type=report_type,
+            report_type=report_label,
             start_date=start_date_str,
             end_date=end_date_str,
             attendances=attendances
         )
         
         if success:
-            messages.success(request, f'Report sent successfully to {email}')
+            messages.success(
+                request,
+                f'✅ {report_type.title()} report for {user_display} sent successfully to {email}'
+            )
         else:
-            messages.error(request, 'Failed to send email. Please check email configuration.')
+            messages.error(request, 'Failed to send email. Please check email configuration in settings.')
         
-        return redirect('dashboard:admin_dashboard')
+        return redirect('attendance:send_report_email')
     
-    return render(request, 'attendance/send_report.html')
+    context = {
+        'all_users': all_users,
+        'logged_in_email': request.user.email or '',
+    }
+    return render(request, 'attendance/send_report.html', context)
+
+
+@login_required
+def get_user_attendance_preview(request):
+    """
+    AJAX endpoint: Returns attendance summary for a selected user
+    Used to show a preview when user is selected in the report form
+    """
+    if not request.user.is_admin():
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    user_id = request.GET.get('user_id')
+    if not user_id:
+        return JsonResponse({'error': 'User ID is required'}, status=400)
+    
+    try:
+        user = CustomUser.objects.get(id=int(user_id))
+    except (CustomUser.DoesNotExist, ValueError):
+        return JsonResponse({'error': 'User not found'}, status=404)
+    
+    # Get attendance summary
+    total_records = Attendance.objects.filter(user=user).count()
+    
+    today = timezone.localtime(timezone.now()).date()
+    month_start = today.replace(day=1)
+    
+    this_month = Attendance.objects.filter(user=user, date__gte=month_start).count()
+    
+    # Get last 5 attendance records
+    recent = Attendance.objects.filter(user=user).order_by('-date', '-time')[:5]
+    recent_list = []
+    for att in recent:
+        recent_list.append({
+            'date': att.date.strftime('%Y-%m-%d'),
+            'time': att.time.strftime('%H:%M:%S') if att.time else '',
+            'status': att.status,
+        })
+    
+    # Get first and last attendance dates
+    first_record = Attendance.objects.filter(user=user).order_by('date').first()
+    last_record = Attendance.objects.filter(user=user).order_by('-date').first()
+    
+    return JsonResponse({
+        'success': True,
+        'user': {
+            'id': user.id,
+            'username': user.username,
+            'full_name': f"{user.first_name} {user.last_name}".strip() or user.username,
+            'unique_id': user.unique_id or '',
+            'email': user.email or '',
+            'department': user.department or '',
+        },
+        'summary': {
+            'total_records': total_records,
+            'this_month': this_month,
+            'first_date': first_record.date.strftime('%Y-%m-%d') if first_record else None,
+            'last_date': last_record.date.strftime('%Y-%m-%d') if last_record else None,
+        },
+        'recent_attendance': recent_list,
+    })

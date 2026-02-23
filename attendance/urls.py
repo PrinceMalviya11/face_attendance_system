@@ -13,4 +13,5 @@ urlpatterns = [
     path('reports/monthly/', views.monthly_report, name='monthly_report'),
     path('reports/user/<int:user_id>/', views.user_report, name='user_report'),
     path('reports/send-email/', views.send_report_email, name='send_report_email'),
+    path('reports/user-preview/', views.get_user_attendance_preview, name='user_attendance_preview'),
 ]
