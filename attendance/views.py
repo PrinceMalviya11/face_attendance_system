@@ -27,72 +27,87 @@ def mark_attendance_view(request):
     """
     if request.method == 'POST':
         import cv2
-        
-        # Capture frame from webcam
-        camera = cv2.VideoCapture(0)
-        ret, frame = camera.read()
-        camera.release()
-        
-        if not ret:
-            return JsonResponse({
-                'success': False,
-                'message': 'Failed to capture frame from webcam'
-            })
-        
-        # Recognize face
-        user_id, confidence, face_location = face_recognition_system.recognize_face(frame)
-        
-        if user_id is not None:
-            try:
-                user = CustomUser.objects.get(id=user_id)
-                
-                # Get session from request
-                subject = request.POST.get('subject', '')
-                session = request.POST.get('session', 'Default')
-                
-                # Mark attendance
-                attendance, created = Attendance.mark_attendance(
-                    user=user,
-                    subject=subject,
-                    session=session,
-                    confidence=confidence
-                )
-                
-                if created:
-                    return JsonResponse({
-                        'success': True,
-                        'message': f'Attendance marked for {user.first_name} {user.last_name}',
-                        'user': {
-                            'username': user.username,
-                            'unique_id': user.unique_id,
-                            'full_name': f"{user.first_name} {user.last_name}",
-                        },
-                        'attendance': {
-                            'date': str(attendance.date),
-                            'time': str(attendance.time),
-                            'status': attendance.status,
-                        }
-                    })
-                else:
-                    return JsonResponse({
-                        'success': False,
-                        'message': f'Attendance already marked for {user.first_name} {user.last_name} today',
-                        'user': {
-                            'username': user.username,
-                            'unique_id': user.unique_id,
-                            'full_name': f"{user.first_name} {user.last_name}",
-                        }
-                    })
-            except CustomUser.DoesNotExist:
+        import traceback
+
+        try:
+            # Capture frame from webcam
+            camera = cv2.VideoCapture(0)
+            if not camera.isOpened():
                 return JsonResponse({
                     'success': False,
-                    'message': 'User not found in database'
+                    'message': 'Could not open webcam. Please check that your camera is connected and not in use by another application.'
                 })
-        else:
+
+            ret, frame = camera.read()
+            camera.release()
+
+            if not ret or frame is None:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Failed to capture frame from webcam. Please try again.'
+                })
+
+            # Recognize face
+            user_id, confidence, face_location = face_recognition_system.recognize_face(frame)
+
+            if user_id is not None:
+                try:
+                    user = CustomUser.objects.get(id=user_id)
+
+                    # Get session from request
+                    subject = request.POST.get('subject', '')
+                    session = request.POST.get('session', 'Default')
+
+                    # Mark attendance
+                    attendance, created = Attendance.mark_attendance(
+                        user=user,
+                        subject=subject,
+                        session=session,
+                        confidence=confidence
+                    )
+
+                    if created:
+                        return JsonResponse({
+                            'success': True,
+                            'message': f'Attendance marked for {user.first_name} {user.last_name}',
+                            'user': {
+                                'username': user.username,
+                                'unique_id': user.unique_id,
+                                'full_name': f"{user.first_name} {user.last_name}",
+                            },
+                            'attendance': {
+                                'date': str(attendance.date),
+                                'time': str(attendance.time),
+                                'status': attendance.status,
+                            }
+                        })
+                    else:
+                        return JsonResponse({
+                            'success': False,
+                            'message': f'Attendance already marked for {user.first_name} {user.last_name} today',
+                            'user': {
+                                'username': user.username,
+                                'unique_id': user.unique_id,
+                                'full_name': f"{user.first_name} {user.last_name}",
+                            }
+                        })
+                except CustomUser.DoesNotExist:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'User not found in database'
+                    })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Face not recognized. Please ensure good lighting and look directly at the camera.',
+                    'confidence': float(confidence) if confidence is not None else None
+                })
+
+        except Exception as e:
+            traceback.print_exc()
             return JsonResponse({
                 'success': False,
-                'message': 'Face not recognized. Please try again.',
-                'confidence': float(confidence) if confidence else None
+                'message': f'An error occurred: {str(e)}. Please check that the face model has been trained.'
             })
     
     return render(request, 'attendance/mark_attendance.html')

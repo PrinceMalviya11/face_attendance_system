@@ -86,3 +86,85 @@
     }
 </style>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function startAttendanceRecognition() {
+        const subject = document.getElementById('subject').value.trim();
+        const session = document.getElementById('session').value;
+        const statusDiv = document.getElementById('recognition-status');
+        const resultDiv = document.getElementById('recognition-result');
+
+        // Show loading state
+        statusDiv.innerHTML = `
+            <div class="alert alert-info d-flex align-items-center" role="alert">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                <span>Capturing frame and recognizing face... Please stay still.</span>
+            </div>`;
+        resultDiv.innerHTML = '';
+
+        const formData = new FormData();
+        formData.append('subject', subject);
+        formData.append('session', session);
+        formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+
+        fetch("{% url 'attendance:mark_attendance' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Server error: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                statusDiv.innerHTML = '';
+                resultDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <h6><i class="bi bi-check-circle-fill"></i> Attendance Marked!</h6>
+                        <p class="mb-1"><strong>Name:</strong> ${data.user.full_name}</p>
+                        <p class="mb-1"><strong>ID:</strong> ${data.user.unique_id}</p>
+                        <p class="mb-1"><strong>Date:</strong> ${data.attendance.date}</p>
+                        <p class="mb-0"><strong>Time:</strong> ${data.attendance.time}</p>
+                    </div>`;
+            } else {
+                statusDiv.innerHTML = '';
+                resultDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Notice:</strong> ${data.message}
+                        ${data.user ? `<hr><p class="mb-0"><strong>User:</strong> ${data.user.full_name}</p>` : ''}
+                    </div>`;
+            }
+        })
+        .catch(error => {
+            statusDiv.innerHTML = '';
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-circle-fill"></i>
+                    <strong>Error:</strong> ${error.message || 'Failed to connect to server. Please try again.'}
+                </div>`;
+        });
+    }
+</script>
+{% endblock %}
